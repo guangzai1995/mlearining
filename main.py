@@ -3,7 +3,7 @@ import numpy as np
 from tqdm import tqdm
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import cross_val_score, train_test_split
-RANDOM_SEED = 969 # 固定随机种子
+RANDOM_SEED = 625 # 固定随机种子
 from sklearn import preprocessing #归一化
 
 def load_data(path):
@@ -28,7 +28,7 @@ def load_data(path):
                 line_data.append(line)  # 处理完成后的行，追加到列表中
         cur_sample_num = int(line_data[0])# 保存样例个数
         cur_feature_num = int(line_data[1])  # 保存每个特征个数
-        is_normalization=line_data[2]  # 保存是否归一化行
+        is_normalization=int(line_data[2])  # 保存是否归一化行
         cur_g_feature = line_data[3] + ' ' + line_data[4]
         g_feature.append(cur_g_feature)  # 保存全局特征行
         for j in range(5):
@@ -41,7 +41,7 @@ def load_data(path):
         for new_line in line_data:
             label.append(int(new_line.split()[0]))  # 获取标签值
             sample_line_num = int((len(new_line.split())-1)/4)
-            new_line = ' '.join(np.delete(new_line.split(), [0, 1]).tolist())
+            new_line = ' '.join(np.delete(new_line.split(), [0]).tolist())
             #assert sample_line_num * cur_feature_num == len(new_line.split())  # 判断每行样例个数是否和给定个数相同
 
             if sample_line_num < max(sample_line_num_l):
@@ -56,7 +56,8 @@ def load_data(path):
         if not is_normalization:
             min_max_scaler = preprocessing.MinMaxScaler()
             normalization= min_max_scaler.fit_transform(normalization)
-            data.append(normalization)
+            for ijk in normalization:
+                data.append(np.array(ijk))
     return np.array(data),np.array(label)
 
 def knn_sklearn(X, y, ks=[3], method=1):  #调整K 距离 距离带权
@@ -100,6 +101,7 @@ all_x,all_y=load_data(path)
 # print(all_x)
 
 
+
 x_train,x_test,y_train,y_test = train_test_split(all_x, all_y, test_size=0.2, random_state=RANDOM_SEED)
 
 # ks = [1, 3, 5, 7]   #测试模型
@@ -113,12 +115,14 @@ clf.fit(x_train, y_train)
 res = clf.score(x_test, y_test)
 print(" Accurancy:", res)
 
+
 predict=[]
 predict=clf.predict(all_x)
 
 ori=all_y.tolist()
+print(len(ori))
 error=[]
 for ind in range(len(ori)):
     if (ori-predict)[ind] !=0 :
         error.append(ind+1)
-print(error)
+print("error sample index is:",error)
